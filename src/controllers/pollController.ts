@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { PollService } from '../services/pollService';
-import { CreatePollRequest, AuthenticatedRequest, PollWithResults, PaginatedResponse } from '../types';
+import { CreatePollRequest, AuthenticatedRequest, PollWithResults, PaginatedResponse, DashboardStats } from '../types';
 import ErrorResponse from '../utils/errorResponse';
 import SuccessResponse from '../utils/successResponse';
 import { StatusCodes } from 'http-status-codes';
@@ -64,6 +64,45 @@ export class PollController {
         return res.status(StatusCodes.NOT_FOUND).json(eR);
       }
       
+      const eR = new ErrorResponse('Internal Server Error', null, null);
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(eR);
+    }
+  }
+
+  async getDashboardStats(req: AuthenticatedRequest, res: Response): Promise<any> {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        const eR = new ErrorResponse('User ID is required', null, null);
+        return res.status(StatusCodes.BAD_REQUEST).json(eR);
+      }
+
+      const stats: DashboardStats = await pollService.getDashboardStats(userId);
+      
+      const sR = new SuccessResponse('Dashboard stats fetched successfully', stats, null);
+      return res.status(StatusCodes.OK).json(sR);
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+      const eR = new ErrorResponse('Internal Server Error', null, null);
+      return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(eR);
+    }
+  }
+
+  async getPollsByUserId(req: AuthenticatedRequest, res: Response): Promise<any> {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        const eR = new ErrorResponse('User ID is required', null, null);
+        return res.status(StatusCodes.BAD_REQUEST).json(eR);
+      }
+      
+      const status = req.query.status as 'published' | 'draft' | 'all' | undefined;
+      const polls = await pollService.getPollsByUserId(userId, status);
+      
+      const sR = new SuccessResponse('Polls fetched successfully', polls, null);
+      return res.status(StatusCodes.OK).json(sR);
+    } catch (error) {
+      console.error('Error fetching polls:', error);
       const eR = new ErrorResponse('Internal Server Error', null, null);
       return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(eR);
     }

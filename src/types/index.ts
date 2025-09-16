@@ -92,3 +92,15 @@ export interface PaginatedResponse<T> {
   pagination: PaginationMeta;
 }
 
+export interface DashboardStats {
+  myPolls: {
+    total: number;
+    published: number;
+    drafts: number;
+  };
+  totalVotes: number;
+  activePolls: number;
+  recentPolls: PollWithResults[];
+  allPublishedPolls: number;
+}
+
