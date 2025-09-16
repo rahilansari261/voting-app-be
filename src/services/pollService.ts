@@ -92,10 +92,20 @@ export class PollService {
     return polls.map(poll => this.formatPollWithResults(poll));
   }
 
-  async getAllPolls(page = 1, limit = 10, publishedOnly = false): Promise<PaginatedResponse<PollWithResults>> {
+  async getAllPolls(page = 1, limit = 10, publishedOnly = false, filter?: string, userId?: string): Promise<PaginatedResponse<PollWithResults>> {
     const skip = (page - 1) * limit;
+    let where: any = {};
     
-    const where = publishedOnly ? { isPublished: true } : {};
+    // Apply published filter
+    if (publishedOnly) {
+      where.isPublished = true;
+    }
+    
+    // Apply filter based on type
+    if (filter === 'my-polls' && userId) {
+      where.creatorId = userId;
+    }
+    // For other filters or no filter, we don't add additional conditions
 
     const [polls, total] = await Promise.all([
       prisma.poll.findMany({
@@ -226,9 +236,8 @@ export class PollService {
 
     return { message: 'Poll deleted successfully' };
   }
-
   async getDashboardStats(userId: string): Promise<DashboardStats> {
-    // Get user's polls with vote counts
+    // Get user's polls with vote counts, ordered by creation date (newest first)
     const userPolls = await prisma.poll.findMany({
       where: { creatorId: userId },
       include: {
@@ -245,51 +254,28 @@ export class PollService {
             }
           }
         }
-      }
+      },
+      orderBy: { createdAt: 'desc' }
     });
 
     // Calculate user's poll statistics
     const publishedPolls = userPolls.filter(poll => poll.isPublished);
     const draftPolls = userPolls.filter(poll => !poll.isPublished);
     
-    // Calculate total votes across user's published polls
+    // Calculate total votes across user's polls only
     const totalVotes = userPolls.reduce((sum, poll) => {
       return sum + poll.options.reduce((optionSum: number, option: any) => 
         optionSum + option._count.votes, 0
       );
     }, 0);
 
-    // Get active polls count (all published polls across platform)
-    const activePolls = await prisma.poll.count({
-      where: { isPublished: true }
-    });
+    // Get user's active polls count (only user's published polls)
+    const activePolls = publishedPolls.length;
 
-    // Get all published polls count
-    const allPublishedPolls = await prisma.poll.count({
-      where: { isPublished: true }
-    });
-
-    // Get recent polls (last 5 published polls across platform)
-    const recentPolls = await prisma.poll.findMany({
-      where: { isPublished: true },
-      take: 5,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        creator: {
-          select: {
-            id: true,
-            name: true
-          }
-        },
-        options: {
-          include: {
-            _count: {
-              select: { votes: true }
-            }
-          }
-        }
-      }
-    });
+    // Get user's recent polls (last 5 polls by this user, already ordered by createdAt desc)
+    const recentPolls = userPolls
+      .slice(0, 5)
+      .map(poll => this.formatPollWithResults(poll));
 
     return {
       myPolls: {
@@ -299,8 +285,9 @@ export class PollService {
       },
       totalVotes,
       activePolls,
-      recentPolls: recentPolls.map(poll => this.formatPollWithResults(poll)),
-      allPublishedPolls
+      recentPolls,
+      allPublishedPolls: publishedPolls.length // Only user's published polls
     };
   }
+
 }

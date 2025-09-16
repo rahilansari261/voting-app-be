@@ -113,7 +113,19 @@ export class PollController {
       const page = parseInt(req.query.page as string) || 1;
       const limit = parseInt(req.query.limit as string) || 10;
       const published = req.query.published === 'true' || false;
-      const result: PaginatedResponse<PollWithResults> = await pollService.getAllPolls(page, limit, published);
+      const filter = req.query.filter as string;
+      
+      // If filter is 'my-polls', we need the user ID
+      let userId: string | undefined;
+      if (filter === 'my-polls') {
+        if (!req.user?.id) {
+          const eR = new ErrorResponse('Authentication required for my-polls filter', null, null);
+          return res.status(StatusCodes.UNAUTHORIZED).json(eR);
+        }
+        userId = req.user.id;
+      }
+      
+      const result: PaginatedResponse<PollWithResults> = await pollService.getAllPolls(page, limit, published, filter, userId);
       
       const sR = new SuccessResponse('Polls fetched successfully', result, null);
       return res.status(StatusCodes.OK).json(sR);
