@@ -18,8 +18,8 @@ export class VoteController {
       }
 
       // Basic validation
-      if (!voteData.pollOptionId) {
-        const eR = new ErrorResponse('Poll option ID is required', null, null);
+      if (!voteData.optionIds || voteData.optionIds.length === 0) {
+        const eR = new ErrorResponse('At least one poll option must be selected', null, null);
         return res.status(StatusCodes.BAD_REQUEST).json(eR);
       }
 

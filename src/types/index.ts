@@ -34,7 +34,7 @@ export interface CreatePollRequest {
 }
 
 export interface VoteRequest {
-  pollOptionId: string;
+  optionIds: string[];
 }
 
 export interface PollWithResults {

@@ -12,7 +12,7 @@ export class PollController {
     try {
       const pollData: CreatePollRequest = req.body;
 
-      console.log('pollData', pollData);
+      
       
       if (!req.user) {
         const eR = new ErrorResponse('Authentication required', null, null);
@@ -24,6 +24,7 @@ export class PollController {
         const eR = new ErrorResponse('Question and options array are required', null, null);
         return res.status(StatusCodes.BAD_REQUEST).json(eR);
       }
+
 
       const poll = await pollService.createPoll(pollData, req.user.id);
       

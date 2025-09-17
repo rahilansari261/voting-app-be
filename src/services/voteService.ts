@@ -31,7 +31,21 @@ export interface PollResults {
 
 export class VoteService {
   async submitVote(voteData: VoteRequest, userId: string): Promise<VoteResult> {
-    const { pollOptionId } = voteData;
+    const { optionIds } = voteData;
+
+    // Validate that at least one option is provided
+    if (!optionIds || optionIds.length === 0) {
+      throw new Error('At least one poll option must be selected');
+    }
+
+    // For now, we'll only handle single selection (first option)
+    // TODO: Implement multiple selection if needed
+    const pollOptionId = optionIds[0];
+
+    // Additional validation to ensure pollOptionId is defined
+    if (!pollOptionId) {
+      throw new Error('Invalid poll option selected');
+    }
 
     // Verify poll option exists and get poll info
     const pollOption = await prisma.pollOption.findUnique({

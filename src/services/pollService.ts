@@ -3,7 +3,7 @@ import { CreatePollRequest, PollWithResults, PaginatedResponse, DashboardStats }
 
 export class PollService {
   async createPoll(pollData: CreatePollRequest, creatorId: string) {
-    const { question, options, isPublished = false } = pollData;
+    const { question, options, isPublished } = pollData;
 
     if (options.length < 2) {
       throw new Error('Poll must have at least 2 options');
@@ -12,7 +12,7 @@ export class PollService {
     const poll = await prisma.poll.create({
       data: {
         question,
-        isPublished,
+        isPublished: isPublished || false,
         creatorId,
         options: {
           create: options.map(option => ({ text: typeof option === "string" ? option : option.text }))
