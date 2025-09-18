@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, User, Poll } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -6,135 +6,76 @@ const prisma = new PrismaClient();
 async function main() {
   console.log('🌱 Starting database seed...');
 
-  // Create sample users
+  // Create 4 users
   const hashedPassword = await bcrypt.hash('password123', 12);
+  const users: User[] = [];
 
-  const user1 = await prisma.user.upsert({
-    where: { email: 'john@example.com' },
-    update: {},
-    create: {
-      name: 'John Doe',
-      email: 'john@example.com',
-      password: hashedPassword
-    }
-  });
-
-  const user2 = await prisma.user.upsert({
-    where: { email: 'jane@example.com' },
-    update: {},
-    create: {
-      name: 'Jane Smith',
-      email: 'jane@example.com',
-      password: hashedPassword
-    }
-  });
-
-  console.log('✅ Created users:', { user1: user1.name, user2: user2.name });
-
-  // Create sample polls
-  const poll1 = await prisma.poll.create({
-    data: {
-      question: 'What is your favorite programming language?',
-      isPublished: true,
-      creatorId: user1.id,
-      options: {
-        create: [
-          { text: 'JavaScript' },
-          { text: 'Python' },
-          { text: 'Java' },
-          { text: 'Go' }
-        ]
+  for (let i = 1; i <= 4; i++) {
+    const user = await prisma.user.upsert({
+      where: { email: `user${i}@gmail.com` },
+      update: {},
+      create: {
+        name: `User ${i}`,
+        email: `user${i}@gmail.com`,
+        password: hashedPassword
       }
-    }
-  });
-
-  const poll2 = await prisma.poll.create({
-    data: {
-      question: 'Which framework do you prefer for frontend development?',
-      isPublished: true,
-      creatorId: user2.id,
-      options: {
-        create: [
-          { text: 'React' },
-          { text: 'Vue.js' },
-          { text: 'Angular' },
-          { text: 'Svelte' }
-        ]
-      }
-    }
-  });
-
-  const poll3 = await prisma.poll.create({
-    data: {
-      question: 'What is your preferred database?',
-      isPublished: false, // Unpublished poll
-      creatorId: user1.id,
-      options: {
-        create: [
-          { text: 'PostgreSQL' },
-          { text: 'MySQL' },
-          { text: 'MongoDB' },
-          { text: 'Redis' }
-        ]
-      }
-    }
-  });
-
-  console.log('✅ Created polls:', { 
-    poll1: poll1.question, 
-    poll2: poll2.question, 
-    poll3: poll3.question 
-  });
-
-  // Get poll options for voting with proper error handling
-  const poll1Options = await prisma.pollOption.findMany({
-    where: { pollId: poll1.id }
-  });
-
-  const poll2Options = await prisma.pollOption.findMany({
-    where: { pollId: poll2.id }
-  });
-
-  // Validate that we have enough options
-  if (poll1Options.length < 2) {
-    throw new Error(`Poll 1 should have at least 2 options, but found ${poll1Options.length}`);
+    });
+    users.push(user);
+    console.log(`✅ Created user: ${user.name} (${user.email})`);
   }
 
-  if (poll2Options.length < 2) {
-    throw new Error(`Poll 2 should have at least 2 options, but found ${poll2Options.length}`);
-  }
-
-  // Create some sample votes with proper type safety
-  const votes: Array<{ userId: string; pollOptionId: string; description?: string }> = [
-    // User 1 votes on poll 1
-    { userId: user1.id, pollOptionId: poll1Options[0]!.id, description: 'JavaScript' },
-    { userId: user1.id, pollOptionId: poll1Options[1]!.id, description: 'Python (this should fail due to unique constraint)' },
-    
-    // User 2 votes on poll 1
-    { userId: user2.id, pollOptionId: poll1Options[0]!.id, description: 'JavaScript' },
-    
-    // User 1 votes on poll 2
-    { userId: user1.id, pollOptionId: poll2Options[0]!.id, description: 'React' },
-    
-    // User 2 votes on poll 2
-    { userId: user2.id, pollOptionId: poll2Options[1]!.id, description: 'Vue.js' },
+  // Create 4 polls for each user (16 polls total)
+  const pollQuestions = [
+    'What is your favorite programming language?',
+    'Which framework do you prefer for frontend development?',
+    'What is your preferred database?',
+    'Which cloud provider do you use most?'
   ];
 
-  for (const vote of votes) {
-    try {
-      await prisma.vote.create({
+  const pollOptions = [
+    ['JavaScript', 'Python', 'Java', 'Go'],
+    ['React', 'Vue.js', 'Angular', 'Svelte'],
+    ['PostgreSQL', 'MySQL', 'MongoDB', 'Redis'],
+    ['AWS', 'Google Cloud', 'Azure', 'DigitalOcean']
+  ];
+
+  const polls: Poll[] = [];
+
+  for (let userIndex = 0; userIndex < users.length; userIndex++) {
+    const user = users[userIndex];
+    
+    if (!user) {
+      console.error(`❌ User at index ${userIndex} is undefined`);
+      continue;
+    }
+    
+    for (let pollIndex = 0; pollIndex < 4; pollIndex++) {
+      const question = pollQuestions[pollIndex];
+      const options = pollOptions[pollIndex];
+      
+      if (!question || !options) {
+        console.error(`❌ Question or options at index ${pollIndex} is undefined`);
+        continue;
+      }
+      
+      const poll = await prisma.poll.create({
         data: {
-          userId: vote.userId,
-          pollOptionId: vote.pollOptionId
+          question: question,
+          isPublished: true,
+          creatorId: user.id,
+          options: {
+            create: options.map(optionText => ({
+              text: optionText
+            }))
+          }
         }
       });
-      console.log(`✅ Created vote for user ${vote.userId} on option ${vote.pollOptionId} (${vote.description})`);
-    } catch (error) {
-      console.log(`⚠️  Skipped duplicate vote for user ${vote.userId} on option ${vote.pollOptionId} (${vote.description})`);
+      polls.push(poll);
+      console.log(`✅ Created poll: "${poll.question}" by ${user.name}`);
     }
   }
 
-  console.log('🎉 Database seed completed successfully!');
+  console.log(`🎉 Database seed completed successfully! Created ${users.length} users and ${polls.length} polls.`);
 }
 
 main()
