@@ -24,7 +24,7 @@ const wsService = new WebSocketService(server);
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || "http://localhost:4006",
+  origin: process.env.CORS_ORIGIN || "https://voting.hudhudapp.in",
   credentials: true
 }));
 app.use(morgan('combined'));
