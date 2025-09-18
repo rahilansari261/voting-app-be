@@ -10,7 +10,8 @@ export class WebSocketService {
   constructor(server: HTTPServer) {
     this.io = new SocketIOServer(server, {
       cors: {
-        origin: process.env.CORS_ORIGIN || "http://localhost:4006",
+        // origin: process.env.CORS_ORIGIN || "https://voting.hudhudapp.in",
+        origin: "*",
         methods: ["GET", "POST"]
       }
     });
