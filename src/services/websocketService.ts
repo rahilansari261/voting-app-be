@@ -6,12 +6,21 @@ import { WebSocketEvents, JWTPayload, PollWithResults } from '../types';
 
 export class WebSocketService {
   private io: SocketIOServer;
-
+  private allowedOrigins = ["https://voting.hudhudapp.in", "http://localhost:4006"];
   constructor(server: HTTPServer) {
     this.io = new SocketIOServer(server, {
       cors: {
-        // origin: process.env.CORS_ORIGIN || "https://voting.hudhudapp.in",
-        origin: "*",
+        origin: (origin: string | undefined, callback: (err: Error | null, allow: boolean) => void) => {
+          if (!origin || this.allowedOrigins.includes(origin)) {
+            return callback(null, true);
+          } else {
+            return callback(new Error("Not allowed by CORS"), false);
+          }
+        },
+        credentials: true,
+        optionsSuccessStatus: 200,
+        exposedHeaders: ["x-app-type"],
+        allowedHeaders: ["Content-Type", "Authorization", "x-app-type"],
         methods: ["GET", "POST"]
       }
     });
