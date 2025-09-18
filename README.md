@@ -11,6 +11,34 @@ A robust backend service for a real-time polling application built with Node.js,
 - **Room-based Broadcasting**: Efficient real-time updates for specific polls
 - **Type Safety**: Full TypeScript implementation with Prisma ORM
 
+## Live Demo
+
+🌐 **Try the application live**: [https://voting.hudhudapp.in/](https://voting.hudhudapp.in/)
+
+## Video Demonstration
+
+Watch the application in action: [Real-Time Polling App Demo](https://www.loom.com/share/e79c13afbeaa4321b66c6b20abd5ebd0?sid=d4a5bf79-ff67-49d8-a191-687df0312d05)
+
+## Getting Started
+
+### Sample Users
+
+The application comes with 4 pre-configured sample users for testing:
+
+| Email | Password |
+|-------|----------|
+| user1@gmail.com | password123 |
+| user2@gmail.com | password123 |
+| user3@gmail.com | password123 |
+| user4@gmail.com | password123 |
+
+### How to Use
+
+1. **Sign Up or Login**: Use one of the sample users above or create a new account by signing up
+2. **Create a Poll**: After logging in, create a new poll with multiple options
+3. **Cast Votes**: Users can vote on polls (one vote per user per poll)
+4. **Real-time Updates**: Online users will be notified instantly when votes are cast or polls are updated
+
 ## Tech Stack
 
 - **Backend**: Node.js with Express.js
