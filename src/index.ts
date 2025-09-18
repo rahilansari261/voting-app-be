@@ -9,7 +9,7 @@ import { WebSocketService } from './services/websocketService';
 // Import routes
 import userRoutes from './routes/userRoutes';
 import pollRoutes from './routes/pollRoutes';
-import voteRoutes from './routes/voteRoutes';
+import createVoteRoutes from './routes/voteRoutes';
 
 // Load environment variables
 dotenv.config();
@@ -46,7 +46,7 @@ app.get('/api/health', (req: Request, res: Response) => {
 // API Routes
 app.use('/api/users', userRoutes);
 app.use('/api/polls', pollRoutes);
-app.use('/api/votes', voteRoutes);
+app.use('/api/votes', createVoteRoutes(wsService));
 
 // 404 handler
 app.use('*', (req: Request, res: Response) => {
